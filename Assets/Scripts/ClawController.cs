@@ -68,10 +68,13 @@ public class ClawController : MonoBehaviour
         // 确保在开始新一轮摆动时，重置所有状态
         if (grabbedItem != null)
         {
-            // 在这里处理得分逻辑 (之后会移到GameManager)
+            /// 获取宝藏的价值
             int value = grabbedItem.GetComponent<Treasure>().value;
-            Debug.Log("获得了: " + value); // 暂时用Debug打印分数
 
+            // 调用GameManager的AddScore方法来加分
+            GameManager.Instance.AddScore(value);
+
+            // 销毁宝藏并重置状态
             Destroy(grabbedItem);
             grabbedItem = null;
         }
