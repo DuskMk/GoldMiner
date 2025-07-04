@@ -22,7 +22,10 @@ public class UIManager : Singleton<UIManager>
     public UIManager()
     {   //在字典中添加一个 UI 资源信息，类型为 UITest，资源路径为 UI/UITest，并设置 Cache 为 true，表示需要缓存。
         //this.UIResources.Add(typeof(UIBag), new UIElement() { Resources = "UI/Bag/UIBag", Cache = false });//false，以便每次生成都执行一次Start方法，刷新背包物品
-        
+        this.UIResources.Add(typeof(UIReady), new UIElement() { Resources = "UI/UIReady", Cache = true });
+        this.UIResources.Add(typeof(UIVictory), new UIElement() { Resources = "UI/UIVictory", Cache = true });
+        this.UIResources.Add(typeof(UIFailure), new UIElement() { Resources = "UI/UIFailure", Cache = true });
+        this.UIResources.Add(typeof(UIStart), new UIElement() { Resources = "UI/UIStart", Cache = true });
     }
     ~UIManager() { }
 
@@ -31,7 +34,7 @@ public class UIManager : Singleton<UIManager>
     /// </summary>
     public T Show<T>()
     {   //播放声音
-        SoundManager.Instance.PlaySound(SoundDefine.SFX_UI_Win_Open);
+        SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_Win_Open);
 
         //获取 UI 的类型，存在Type变量type中，以便检查字典
         Type type = typeof(T);
@@ -66,7 +69,7 @@ public class UIManager : Singleton<UIManager>
     public void Close(Type type, bool isplaysound = true)
     {
         //播放声音
-        if(isplaysound) SoundManager.Instance.PlaySound(SoundDefine.SFX_UI_Win_Close);
+        if(isplaysound) SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_Win_Close);
 
         if (this.UIResources.ContainsKey(type))
         {   //从字典获取UI信息

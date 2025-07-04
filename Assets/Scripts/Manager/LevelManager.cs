@@ -1,68 +1,172 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System;
-
+using System.Collections; 
 public class LevelManager : MonoSingleton<LevelManager>
 {
-    // --- 事件定义 ---
-    // 当一个新关卡准备好时，发布关卡数据
-    public event Action<int, int> OnLevelDataLoaded; // 参数: targetScore, levelTime
+    [Header("关卡配置")]
+    public List<LevelData> levels; // 将所有关卡的LevelData文件拖到这里
+    private int currentLevelIndex = 0;
 
-    [Header("关卡资源")]
-    public List<GameObject> treasurePrefabs; // 所有宝藏预制体的列表
+    private List<GameObject> spawnedTreasures = new List<GameObject>(); // 跟踪本关生成的所有宝藏
+    public event System.Action<LevelData> OnLevelDataLoaded; //参数targetScore, time
 
-    [Header("关卡生成设置")]
-    public Transform generationAreaMin;      // 生成区域的左下角点
-    public Transform generationAreaMax;      // 生成区域的右上角点
-    public int itemsToGenerate = 15;         // 本关生成的物品数量
-
-    // --- 模拟的关卡数据 ---
-    // 在更复杂的项目中，这里会是一个关卡数据列表 (e.g., List<LevelData>)
-    [SerializeField] private int currentLevelIndex = 1;
-    [SerializeField] private int currentTargetScore = 200;
-    [SerializeField] private float currentLevelTime = 60f;
-
-    void Awake()
-    {
-        
-    }
-
+    // 游戏开始时自动加载第一关
     void Start()
     {
-        LoadLevel(currentLevelIndex);
+        UIManager.Instance.Show<UIStart>();
+        // 延迟一小段时间，确保其他Manager都已初始化完毕
+        //StartCoroutine(LoadLevelAfterDelay(0, 0.1f));
+    }
+
+    // 公开接口，用于加载下一关
+    public void LoadNextLevel()
+    {
+        currentLevelIndex++;
+        if (currentLevelIndex < levels.Count)
+        {
+            LoadLevel(currentLevelIndex);
+        }
+        else
+        {
+            Debug.Log("恭喜！所有关卡已完成！");
+            // 在这里处理游戏通关逻辑
+        }
     }
 
     public void LoadLevel(int levelIndex)
     {
-        // 1. 清理上一关卡的残留物 (如果需要)
-        // ClearPreviousLevel();
+        currentLevelIndex = levelIndex;
+        LevelData levelData = levels[levelIndex];
 
-        // 2. 根据levelIndex加载关卡数据 (目前我们先用固定数据模拟)
-        // 在真实项目中，你会从一个ScriptableObject或文件中读取数据
-        this.currentTargetScore = 100 + levelIndex * 50; // 示例：目标分数随关卡增加
-        this.currentLevelTime = 60f; // 示例：时间固定
+        // 1. 清空上一关的宝藏
+        ClearPreviousLevel();
 
-        // 3. 发布关卡数据加载完成事件，通知GameManager和UIManager
-        OnLevelDataLoaded?.Invoke(currentTargetScore, (int)currentLevelTime);
+        // 2. 应用相机和区域设置
+        ApplySpawnAreaProfile(levelData.spawnAreaProfile);
 
-        // 4. 生成本关卡的宝藏
-        GenerateTreasures();
+        // 3. 生成新关卡的宝藏
+        SpawnTreasures(levelData);
 
-        Debug.Log($"Level {levelIndex} loaded. Target: {currentTargetScore}");
+        OnLevelDataLoaded?.Invoke(levelData);
+
+        // 4. 通知GameManager更新UI和游戏状态 (假设GameManager有这个方法)
+        // GameManager.Instance.StartNewLevel(levelData.targetScore, levelData.timeLimit);
+        Debug.Log($"开始加载关卡 {levelData.levelIndex}. 目标分数: {levelData.targetScore}");
+    }
+    
+    private IEnumerator LoadLevelAfterDelay(int levelIndex, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        LoadLevel(levelIndex);
     }
 
-    void GenerateTreasures()
+
+    private void ClearPreviousLevel()
     {
-        for (int i = 0; i < itemsToGenerate; i++)
+        foreach (var treasure in spawnedTreasures)
         {
-            int randomIndex = UnityEngine.Random.Range(0, treasurePrefabs.Count);
-            GameObject selectedPrefab = treasurePrefabs[randomIndex];
+            // 确保物体还存在才归还
+            if (treasure != null && treasure.activeInHierarchy)
+            {
+                GameObjectManager.Instance.Release(treasure);
+            }
+        }
+        spawnedTreasures.Clear();
+    }
 
-            float randomX = UnityEngine.Random.Range(generationAreaMin.position.x, generationAreaMax.position.x);
-            float randomY = UnityEngine.Random.Range(generationAreaMin.position.y, generationAreaMax.position.y);
-            Vector3 randomPosition = new Vector3(randomX, randomY, 0);
+    private void ApplySpawnAreaProfile(SpawnAreaProfile profile)
+    {
+        if (profile == null) return;
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            mainCamera.transform.position = profile.cameraPosition;
+            mainCamera.orthographicSize = profile.cameraOrthographicSize;
+        }
+    }
 
-            Instantiate(selectedPrefab, randomPosition, Quaternion.identity);
+    private void SpawnTreasures(LevelData levelData)
+    {
+        Rect spawnRect = levelData.spawnAreaProfile.spawnBounds;
+        int maxAttempts = 100; // 防止因区域太小或物体太多导致死循环
+
+        foreach (var treasureInfo in levelData.treasuresToSpawn)
+        {
+            for (int i = 0; i < treasureInfo.count; i++)
+            {
+                int attempts = 0;
+                bool positionFound = false;
+                while (!positionFound && attempts < maxAttempts)
+                {
+                    attempts++;
+                    // 在矩形区域内随机生成一个点
+                    Vector2 randomPoint = new Vector2(
+                        Random.Range(spawnRect.xMin, spawnRect.xMax),
+                        Random.Range(spawnRect.yMin, spawnRect.yMax)
+                    );
+
+                    // 检查这个点是否与其他已生成的宝藏重叠
+                    if (!IsOverlapping(randomPoint))
+                    {
+                        GameObject treasure = GameObjectManager.Instance.Get(treasureInfo.type);
+                        if (treasure != null)
+                        {
+                            treasure.transform.position = randomPoint;
+                            treasure.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 360)); // 随机旋转增加多样性
+                            spawnedTreasures.Add(treasure);
+                            positionFound = true;
+                        }
+                    }
+                }
+                if (!positionFound)
+                {
+                    Debug.LogWarning($"无法为 {treasureInfo.type} 找到一个不重叠的位置！");
+                }
+            }
+        }
+    }
+
+    // 检查点是否与已生成的宝藏重叠
+    private bool IsOverlapping(Vector2 point)
+    {
+        foreach (var treasure in spawnedTreasures)
+        {
+            if (treasure.activeInHierarchy)
+            {
+                // 使用宝藏的Collider来判断距离
+                Collider2D col = treasure.GetComponent<Collider2D>();
+                if (col != null)
+                {
+                    // 计算点到宝藏中心点的距离是否小于一个安全半径
+                    // 这里用一个简单的半径估算，更精确可以用Collider2D.OverlapPoint
+                    float distance = Vector2.Distance(point, treasure.transform.position);
+                    float safeRadius = (col.bounds.size.x + col.bounds.size.y) / 2; // 用平均半径作为安全距离
+                    if (distance < safeRadius)
+                    {
+                        return true; // 重叠了
+                    }
+                }
+            }
+        }
+        return false; // 未重叠
+    }
+    public LevelData GetCurLevelData()
+    {
+        if (currentLevelIndex < levels.Count)
+        {
+            return levels[currentLevelIndex];
+        }
+        return null; // 如果没有当前关卡数据，返回null
+    }
+    public void StartLoadLevel()
+    {
+        if(currentLevelIndex == 0)
+        {
+            LoadLevel(0);
+        }
+        else
+        {
+            LoadNextLevel();
         }
     }
 }

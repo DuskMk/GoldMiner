@@ -9,7 +9,8 @@ public class ClawController : MonoBehaviour
     {
         Swinging,  // 摆动中
         Launching, // 发射中
-        Retracting // 收回中
+        Retracting, // 收回中
+        None,
     }
 
     [Header("状态管理")]
@@ -31,6 +32,10 @@ public class ClawController : MonoBehaviour
 
     private GameObject grabbedItem = null; // 用来存储抓到的物体
     private float currentRetractSpeed; // 当前的实际收回速度
+
+    private float clawMinY = -5;
+    private float clawMaxX = 9;
+
     void Start()
     {
         // 获取并记录初始状态
@@ -75,6 +80,7 @@ public class ClawController : MonoBehaviour
             GameManager.Instance.AddScore(value);
 
             // 销毁宝藏并重置状态
+            GameObjectManager.Instance.Release(grabbedItem);
             Destroy(grabbedItem);
             grabbedItem = null;
         }
@@ -97,7 +103,7 @@ public class ClawController : MonoBehaviour
         transform.position += transform.up * -1 * launchSpeed * Time.deltaTime;
 
         // 简易边界检测：如果爪子超出了某个范围，则开始收回
-        if (transform.position.y < -5f || Mathf.Abs(transform.position.x) > 9f)
+        if (transform.position.y < clawMinY || Mathf.Abs(transform.position.x) > clawMaxX)
         {
             currentState = ClawState.Retracting;
             currentRetractSpeed = baseRetractSpeed; // 使用基础速度
@@ -146,5 +152,10 @@ public class ClawController : MonoBehaviour
             float itemWeight = grabbedItem.GetComponent<Treasure>().weight;
             currentRetractSpeed = baseRetractSpeed / itemWeight;
         }
+    }
+    public void SetClaw(float clawMinY,  float clawMaxX)
+    {
+        this.clawMinY = clawMinY;
+        this.clawMaxX = clawMaxX;
     }
 }
