@@ -47,8 +47,8 @@ public class GameObjectManager : MonoSingleton<GameObjectManager>
             var localItem = item;
             var pool = new ObjectPool<GameObject>(
                 createFunc: () => Instantiate(localItem.prefab, thisTransform), // 如何创建新对象
-                actionOnGet: (obj) => obj.SetActive(true),      // 从池中取出时做什么
-                actionOnRelease: (obj) => obj.SetActive(false),   // 归还到池中时做什么
+                actionOnGet: (obj) => { obj.SetActive(true);  },      // 从池中取出时做什么
+                actionOnRelease: (obj) => { obj.SetActive(false); obj.transform.SetParent(thisTransform); },   // 归还到池中时做什么
                 actionOnDestroy: (obj) => Destroy(obj),         // 当池满或销毁时做什么
                 collectionCheck: false,  // 是否检查对象是否已在池中（开发时可开true）
                 defaultCapacity: 10,     // 池的默认容量

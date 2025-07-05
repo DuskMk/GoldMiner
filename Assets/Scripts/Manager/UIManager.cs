@@ -26,6 +26,7 @@ public class UIManager : Singleton<UIManager>
         this.UIResources.Add(typeof(UIVictory), new UIElement() { Resources = "UI/UIVictory", Cache = true });
         this.UIResources.Add(typeof(UIFailure), new UIElement() { Resources = "UI/UIFailure", Cache = true });
         this.UIResources.Add(typeof(UIStart), new UIElement() { Resources = "UI/UIStart", Cache = true });
+        this.UIResources.Add(typeof(UICompleted), new UIElement() { Resources = "UI/UICompleted", Cache = true });
     }
     ~UIManager() { }
 

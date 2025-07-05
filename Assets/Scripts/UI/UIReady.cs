@@ -8,14 +8,10 @@ public class UIReady: UIWindow, IPointerClickHandler
     public TMP_Text textTime;
     public void OnPointerClick(PointerEventData eventData)
     {
-        // 处理点击事件
-        if (eventData.button == PointerEventData.InputButton.Left)
-        {
-            // 左键点击时执行的逻辑
-            Debug.Log("左键点击了UIReady面板");
-            GameManager.Instance.StartGame();
-            OnClickClose();
-        }
+        // 点击时执行的逻辑
+        Debug.Log("点击了UIReady面板");
+        GameManager.Instance.StartGame();
+        OnClickClose();
     }
     public void SetInfo(int targetScore, int time)
     {

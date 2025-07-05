@@ -81,14 +81,12 @@ public class UIGame : MonoBehaviour
                 uIv.SetInfo(totalScore);
                 break;
             case GameManager.GameState.Failure:
+                var uIf = UIManager.Instance.Show<UIFailure>();
                 break;
             case GameManager.GameState.Pause:
                 break;
             default:
                 break;
         }
-        //readyPanel.SetActive(newState == GameManager.GameState.Ready);
-        //victoryPanel.SetActive(newState == GameManager.GameState.Victory);
-        //failurePanel.SetActive(newState == GameManager.GameState.Failure);
     }
 }

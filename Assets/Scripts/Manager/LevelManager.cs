@@ -1,6 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Collections; 
+public enum emLoadLevelType
+{
+    LoadNextLevel, //加载下一关
+    LoadCurrentLevel, //加载当前关卡
+    LoadFirstLevel, //加载第一关
+}
 public class LevelManager : MonoSingleton<LevelManager>
 {
     [Header("关卡配置")]
@@ -19,17 +25,20 @@ public class LevelManager : MonoSingleton<LevelManager>
     }
 
     // 公开接口，用于加载下一关
-    public void LoadNextLevel()
+    public bool LoadNextLevel()
     {
         currentLevelIndex++;
         if (currentLevelIndex < levels.Count)
         {
             LoadLevel(currentLevelIndex);
+            return true; // 成功加载下一关
         }
         else
         {
-            Debug.Log("恭喜！所有关卡已完成！");
+            Debug.Log("所有关卡已完成！");
+            UIManager.Instance.Show<UICompleted>();
             // 在这里处理游戏通关逻辑
+            return false; 
         }
     }
 
@@ -73,7 +82,17 @@ public class LevelManager : MonoSingleton<LevelManager>
         }
         spawnedTreasures.Clear();
     }
-
+    public bool CheckIsTresureActive()
+    {
+        foreach (var treasure in spawnedTreasures)
+        {
+            if (treasure != null && treasure.activeInHierarchy)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
     private void ApplySpawnAreaProfile(SpawnAreaProfile profile)
     {
         if (profile == null) return;
@@ -158,15 +177,22 @@ public class LevelManager : MonoSingleton<LevelManager>
         }
         return null; // 如果没有当前关卡数据，返回null
     }
-    public void StartLoadLevel()
+    public bool StartLoadLevel(emLoadLevelType loadLevelType)
     {
-        if(currentLevelIndex == 0)
+        switch (loadLevelType)
         {
-            LoadLevel(0);
-        }
-        else
-        {
-            LoadNextLevel();
+            case emLoadLevelType.LoadNextLevel:
+                return LoadNextLevel();
+            case emLoadLevelType.LoadCurrentLevel:
+                LoadLevel(currentLevelIndex);
+                return true;
+            case emLoadLevelType.LoadFirstLevel:
+                currentLevelIndex = 0;
+                LoadLevel(currentLevelIndex);
+                return true;
+            default:
+                return false;
         }
     }
+    
 }

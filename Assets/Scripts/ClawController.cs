@@ -76,12 +76,14 @@ public class ClawController : MonoBehaviour
             /// 获取宝藏的价值
             int value = grabbedItem.GetComponent<Treasure>().value;
 
+            // 销毁宝藏并重置状态
+            GameObjectManager.Instance.Release(grabbedItem);
+
             // 调用GameManager的AddScore方法来加分
             GameManager.Instance.AddScore(value);
 
-            // 销毁宝藏并重置状态
-            GameObjectManager.Instance.Release(grabbedItem);
-            Destroy(grabbedItem);
+            
+            
             grabbedItem = null;
         }
 
@@ -90,7 +92,7 @@ public class ClawController : MonoBehaviour
         transform.rotation = initialRotation * Quaternion.Euler(0, 0, angle);
 
         // 检测玩家输入
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+        if ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0) )&& GameManager.Instance.CurrentGameState == GameManager.GameState.Playing)
         {
             currentState = ClawState.Launching; // 切换到发射状态
         }

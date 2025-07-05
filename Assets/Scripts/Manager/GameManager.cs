@@ -8,19 +8,21 @@ public class GameManager : MonoSingleton<GameManager>
     public event Action<int, int> OnScoreChanged;
     // 当时间更新时触发的事件
     public event Action<int> OnTimeChanged;
-    
+
     // 当游戏状态改变时触发的事件 (准备、开始、胜利、失败)
-    public enum GameState { Ready, Playing, Victory, Failure, Pause } 
+    public enum GameState { Ready, Playing, Victory, Failure, Pause }
     public event Action<GameState> OnGameStateChanged;
 
     private ClawController clawController;
     [SerializeField] private int currentScore;
-    [SerializeField] private int totalScore;
+    [SerializeField] private int lastLevelTotalScore;
 
     [SerializeField] private float currentTime;
     [SerializeField] private int currentTargetScore;
 
     [SerializeField] private GameState currentGameState = GameState.Pause;
+
+    private WaitForSeconds waitForSeconds;
     public GameState CurrentGameState
     {
         get { return currentGameState; }
@@ -29,11 +31,16 @@ public class GameManager : MonoSingleton<GameManager>
             if (currentGameState != value)
             {
                 currentGameState = value;
-                clawController.enabled = value == GameState.Playing;
                 OnGameStateChanged?.Invoke(currentGameState);
+                SetClawEnable();
             }
         }
     }
+    private void SetClawEnable()
+    {
+        clawController.enabled = CurrentGameState == GameState.Playing;
+    }
+
     // --- 订阅事件 ---
     void OnEnable()
     {
@@ -50,18 +57,18 @@ public class GameManager : MonoSingleton<GameManager>
             LevelManager.Instance.OnLevelDataLoaded -= InitializeLevel;
         }
     }
-    
+
     // LevelManager通知我们关卡已加载，我们用这些数据来初始化游戏
     private void InitializeLevel(LevelData levelData)
     {
         currentScore = 0;
         currentTargetScore = levelData.targetScore;
         currentTime = levelData.timeLimit;
-        clawController.SetClaw(levelData.spawnAreaProfile.spawnBounds.yMin-0.5f, levelData.spawnAreaProfile.spawnBounds.xMax+0.5f);
+        clawController.SetClaw(levelData.spawnAreaProfile.spawnBounds.yMin - 0.5f, levelData.spawnAreaProfile.spawnBounds.xMax + 0.5f);
         //CurrentGameState = GameState.Ready; // 关卡加载后，游戏正式开始
 
         // 发布初始游戏状态事件
-        OnScoreChanged?.Invoke(currentScore, totalScore);
+        OnScoreChanged?.Invoke(currentScore, lastLevelTotalScore);
         OnTimeChanged?.Invoke(Mathf.CeilToInt(currentTime));
         //OnGameStateChanged?.Invoke(CurrentGameState);
 
@@ -74,7 +81,7 @@ public class GameManager : MonoSingleton<GameManager>
         //CurrentGameState = GameState.Ready;
         clawController = FindObjectOfType<ClawController>();
         //OnGameStateChanged?.Invoke(CurrentGameState);
-        
+
     }
 
     void Update()
@@ -105,25 +112,48 @@ public class GameManager : MonoSingleton<GameManager>
         OnGameStateChanged?.Invoke(CurrentGameState); // 发布游戏结束状态事件
 
         // 冻结爪子
-        clawController.enabled = false;
+        //clawController.enabled = false;
     }
 
     public void AddScore(int value)
     {
         if (CurrentGameState != GameState.Playing) return;
         Debug.Log($"Adding score: {value}");
-        totalScore += value;
         currentScore += value;
-        OnScoreChanged?.Invoke(currentScore, totalScore);
+        OnScoreChanged?.Invoke(currentScore, lastLevelTotalScore + currentScore);
+        if (!LevelManager.Instance.CheckIsTresureActive())
+        {
+            LevelEnd();
+        }
     }
     public void StartGame()
     {
         this.CurrentGameState = GameState.Playing; // 设置游戏状态为Playing
     }
-    public void StartReady()
+    public void StartReady(emLoadLevelType emLoadLevel = emLoadLevelType.LoadNextLevel)
     {
+        if(emLoadLevel == emLoadLevelType.LoadFirstLevel)
+        {
+            lastLevelTotalScore = 0;
+        }
+        else if(emLoadLevel == emLoadLevelType.LoadNextLevel)
+        {
+            lastLevelTotalScore += currentScore; // 累加上一关的总分
+        }
+
         currentScore = 0;
-        CurrentGameState = GameState.Ready; // 设置游戏状态为准备
-        LevelManager.Instance.StartLoadLevel();
+        if(LevelManager.Instance.StartLoadLevel(emLoadLevel)) 
+            CurrentGameState = GameState.Ready; // 设置游戏状态为准备
+    }
+    public void PauseGame()
+    {
+        if (CurrentGameState == GameState.Playing)
+        {
+            CurrentGameState = GameState.Pause; // 暂停游戏
+        }
+        else if (CurrentGameState == GameState.Pause)
+        {
+            CurrentGameState = GameState.Playing; // 恢复游戏
+        }
     }
 }
