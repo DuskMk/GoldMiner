@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40fb0ecaac14fb84a9e3407b708981eb, type: 3}
+  m_Name: ItemStrength
+  m_EditorClassIdentifier: 
+  itemType: 0
+  itemName: "\u529B\u91CF\u836F\u6C34"
+  description: "\u4E00\u6BB5\u65F6\u95F4\u5185\u589E\u52A0\u62C9\u53D6\u5B9D\u85CF\u7684\u529B\u91CF"
+  price: 100
+  duration: 10
+  value: 2
+  icon: {fileID: 0}

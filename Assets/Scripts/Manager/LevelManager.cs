@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+using DG.Tweening;
 using System.Collections; 
 public enum emLoadLevelType
 {
@@ -15,6 +17,24 @@ public class LevelManager : MonoSingleton<LevelManager>
 
     private List<GameObject> spawnedTreasures = new List<GameObject>(); // 跟踪本关生成的所有宝藏
     public event System.Action<LevelData> OnLevelDataLoaded; //参数targetScore, time
+
+    private Tween magnetTween;
+
+    void OnEnable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
+        }
+    }
 
     // 游戏开始时自动加载第一关
     void Start()
@@ -195,4 +215,63 @@ public class LevelManager : MonoSingleton<LevelManager>
         }
     }
     
+    private void HandleGameStateChanged(GameManager.GameState newState)
+    {
+        if (magnetTween == null || !magnetTween.IsActive()) return;
+
+        if (newState == GameManager.GameState.Playing)
+        {
+            magnetTween.Play();
+        }
+        else if (newState == GameManager.GameState.Pause)
+        {
+            magnetTween.Pause();
+        }
+        else // Victory, Failure, Store, Ready etc.
+        {
+            magnetTween.Kill();
+            magnetTween = null;
+            Debug.Log("Magnet tween killed due to game state change.");
+        }
+    }
+
+    public void ActivateMagnet(float duration)
+    {
+        // Kill any existing magnet tween first
+        if (magnetTween != null && magnetTween.IsActive())
+        {
+            magnetTween.Kill();
+        }
+
+        // 1. Find all active gold treasures
+        var goldTreasures = spawnedTreasures.Where(t => 
+            t.activeInHierarchy &&
+            t.GetComponent<Treasure>() != null &&
+            (t.GetComponent<Treasure>().myType == TreasureType.Gold_Big ||
+             t.GetComponent<Treasure>().myType == TreasureType.Gold_Mid ||
+             t.GetComponent<Treasure>().myType == TreasureType.Gold_Small)
+        ).ToList();
+
+        if (goldTreasures.Count == 0)
+        {
+            Debug.Log("Magnet used, but no gold found.");
+            return;
+        }
+
+        // 2. Pick a random one
+        GameObject targetTreasure = goldTreasures[Random.Range(0, goldTreasures.Count)];
+        Debug.Log($"Magnet targeting: {targetTreasure.name}");
+
+        // 3. Find target position (near claw)
+        Vector3 targetPosition = FindObjectOfType<ClawController>().transform.position;
+        targetPosition.y -= 2; // Move it slightly below the claw's pivot
+
+        // 4. Use DOTween to move it and store the tween
+        magnetTween = targetTreasure.transform.DOMove(targetPosition, duration)
+            .SetEase(Ease.InOutSine)
+            .OnComplete(() => {
+                Debug.Log("Magnet pull finished.");
+                magnetTween = null;
+            });
+    }
 }

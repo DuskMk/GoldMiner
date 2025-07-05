@@ -35,6 +35,26 @@ public class ClawController : MonoBehaviour
 
     private float clawMinY = -5;
     private float clawMaxX = 9;
+    private float originalBaseRetractSpeed;
+    private Coroutine strengthCoroutine;
+
+    [SerializeField]private bool isStrength;
+    private float strengthMultiplier = 3f;
+    void OnEnable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
+        }
+    }
 
     void Start()
     {
@@ -46,6 +66,8 @@ public class ClawController : MonoBehaviour
         lineRenderer = GetComponent<LineRenderer>();
         // 设置绳子的起点
         lineRenderer.SetPosition(0, ropeStartPoint.position);
+
+        originalBaseRetractSpeed = baseRetractSpeed;
     }
 
     void Update()
@@ -81,8 +103,6 @@ public class ClawController : MonoBehaviour
 
             // 调用GameManager的AddScore方法来加分
             GameManager.Instance.AddScore(value);
-
-            
             
             grabbedItem = null;
         }
@@ -102,7 +122,7 @@ public class ClawController : MonoBehaviour
     {
         // 沿爪子的正上方（Y轴方向）移动
         // transform.up 是指当前对象Y轴在世界空间中的方向
-        transform.position += transform.up * -1 * launchSpeed * Time.deltaTime;
+        transform.position += transform.up * -1 * launchSpeed * Time.deltaTime * (isStrength ? strengthMultiplier : 1f);
 
         // 简易边界检测：如果爪子超出了某个范围，则开始收回
         if (transform.position.y < clawMinY || Mathf.Abs(transform.position.x) > clawMaxX)
@@ -116,7 +136,7 @@ public class ClawController : MonoBehaviour
     {
         // 计算返回初始位置的方向
         Vector3 directionToInitial = (initialPosition - transform.position).normalized;
-        transform.position += directionToInitial * currentRetractSpeed * Time.deltaTime;
+        transform.position += directionToInitial * currentRetractSpeed * Time.deltaTime * (isStrength? strengthMultiplier : 1f);
 
         // 如果已经非常接近初始位置，则判定为已返回
         if (Vector3.Distance(transform.position, initialPosition) < 0.1f)
@@ -144,7 +164,7 @@ public class ClawController : MonoBehaviour
             // 记录抓到的物体
             grabbedItem = other.gameObject;
 
-            // 让物体“粘”在爪子上，成为爪子的子对象
+            // 让物体"粘"在爪子上，成为爪子的子对象
             grabbedItem.transform.SetParent(this.transform);
 
             // 切换到收回状态
@@ -155,6 +175,72 @@ public class ClawController : MonoBehaviour
             currentRetractSpeed = baseRetractSpeed / itemWeight;
         }
     }
+
+    public void DestroyGrabbedTreasure()
+    {
+        if (currentState == ClawState.Retracting && grabbedItem != null)
+        {
+            Debug.Log($"Bomb used on {grabbedItem.name}.");
+            GameObjectManager.Instance.Release(grabbedItem);
+            grabbedItem = null;
+            currentRetractSpeed = baseRetractSpeed; // Reset to full speed
+        }
+    }
+
+    private void HandleGameStateChanged(GameManager.GameState newState)
+    {
+        if (newState != GameManager.GameState.Playing && newState != GameManager.GameState.Pause)
+        {
+            ClearStrengthEffect();
+        }
+    }
+
+    private void ClearStrengthEffect()
+    {
+        if (strengthCoroutine != null)
+        {
+            StopCoroutine(strengthCoroutine);
+            this.isStrength = false;
+            //baseRetractSpeed = originalBaseRetractSpeed;
+            strengthCoroutine = null;
+            Debug.Log("Strength potion effect cleared due to game state change.");
+        }
+    }
+
+    public void ActivateStrength(float multiplier, float duration)
+    {
+        ClearStrengthEffect(); // Clear previous before starting a new one
+        strengthCoroutine = StartCoroutine(StrengthCoroutine(multiplier, duration));
+    }
+
+    private IEnumerator StrengthCoroutine(float multiplier, float duration)
+    {
+        Debug.Log($"Strength potion activated! Speed multiplier: {multiplier} for {duration}s.");
+        //baseRetractSpeed = originalBaseRetractSpeed * multiplier;
+
+        //if (currentState == ClawState.Retracting && grabbedItem != null)
+        //{
+        //    float itemWeight = grabbedItem.GetComponent<Treasure>().weight;
+        //    currentRetractSpeed = baseRetractSpeed / itemWeight;
+        //}
+        if(strengthMultiplier != multiplier) strengthMultiplier = multiplier;
+        this.isStrength = true;
+        float timer = duration;
+        while (timer > 0)
+        {
+            if (GameManager.Instance.CurrentGameState == GameManager.GameState.Playing)
+            {
+                timer -= Time.deltaTime;
+            }
+            yield return null; // Wait for the next frame
+        }
+        this.isStrength = false;
+
+        Debug.Log("Strength potion wore off.");
+        //baseRetractSpeed = originalBaseRetractSpeed;
+        strengthCoroutine = null;
+    }
+
     public void SetClaw(float clawMinY,  float clawMaxX)
     {
         this.clawMinY = clawMinY;

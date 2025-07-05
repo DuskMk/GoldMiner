@@ -1,5 +1,6 @@
 using UnityEngine;
 using System; // 引入System命名空间以使用Action
+using System.Collections;
 
 public class GameManager : MonoSingleton<GameManager>
 {
@@ -10,7 +11,7 @@ public class GameManager : MonoSingleton<GameManager>
     public event Action<int> OnTimeChanged;
 
     // 当游戏状态改变时触发的事件 (准备、开始、胜利、失败)
-    public enum GameState { Ready, Playing, Victory, Failure, Pause }
+    public enum GameState { Ready, Playing, Victory, Failure, Store, Pause }
     public event Action<GameState> OnGameStateChanged;
 
     private ClawController clawController;
@@ -21,6 +22,9 @@ public class GameManager : MonoSingleton<GameManager>
     [SerializeField] private int currentTargetScore;
 
     [SerializeField] private GameState currentGameState = GameState.Pause;
+
+    private float scoreMultiplier = 1f;
+    private Coroutine luckyCloverCoroutine;
 
     private WaitForSeconds waitForSeconds;
     public GameState CurrentGameState
@@ -33,6 +37,12 @@ public class GameManager : MonoSingleton<GameManager>
                 currentGameState = value;
                 OnGameStateChanged?.Invoke(currentGameState);
                 SetClawEnable();
+
+                // 当游戏状态改变时，检查是否要清除增益效果
+                if (currentGameState != GameState.Playing && currentGameState != GameState.Pause)
+                {
+                    ClearLuckyCloverEffect();
+                }
             }
         }
     }
@@ -77,7 +87,7 @@ public class GameManager : MonoSingleton<GameManager>
 
     void Start()
     {
-        // GameManager在开始时处于“准备”状态，等待LevelManager加载关卡
+        // GameManager在开始时处于"准备"状态，等待LevelManager加载关卡
         //CurrentGameState = GameState.Ready;
         clawController = FindObjectOfType<ClawController>();
         //OnGameStateChanged?.Invoke(CurrentGameState);
@@ -97,6 +107,12 @@ public class GameManager : MonoSingleton<GameManager>
         }
     }
 
+    public void AddTime(float timeToAdd)
+    {
+        currentTime += timeToAdd;
+        OnTimeChanged?.Invoke(Mathf.CeilToInt(currentTime)); // Immediately update UI
+        Debug.Log($"Added {timeToAdd}s to the timer.");
+    }
 
     void LevelEnd()
     {
@@ -118,14 +134,81 @@ public class GameManager : MonoSingleton<GameManager>
     public void AddScore(int value)
     {
         if (CurrentGameState != GameState.Playing) return;
-        Debug.Log($"Adding score: {value}");
-        currentScore += value;
+        int scoreToAdd = Mathf.RoundToInt(value * scoreMultiplier);
+        Debug.Log($"Adding score: {value} * {scoreMultiplier} = {scoreToAdd}");
+        currentScore += scoreToAdd;
         OnScoreChanged?.Invoke(currentScore, lastLevelTotalScore + currentScore);
         if (!LevelManager.Instance.CheckIsTresureActive())
         {
             LevelEnd();
         }
     }
+
+    public int GetTotalScore()
+    {
+        return lastLevelTotalScore + currentScore;
+    }
+
+    public void SpendScore(int amount)
+    {
+        if (amount > GetTotalScore())
+        {
+            Debug.LogError("Trying to spend more score than available.");
+            return;
+        }
+
+        if (currentScore >= amount)
+        {
+            currentScore -= amount;
+        }
+        else
+        {
+            int remainingAmount = amount - currentScore;
+            currentScore = 0;
+            lastLevelTotalScore -= remainingAmount;
+        }
+
+        OnScoreChanged?.Invoke(currentScore, GetTotalScore());
+    }
+
+    public void ActivateLuckyClover(float multiplier, float duration)
+    {
+        // 开始新效果前，先清除旧的
+        ClearLuckyCloverEffect();
+        luckyCloverCoroutine = StartCoroutine(LuckyCloverCoroutine(multiplier, duration));
+    }
+
+    private void ClearLuckyCloverEffect()
+    {
+        if (luckyCloverCoroutine != null)
+        {
+            StopCoroutine(luckyCloverCoroutine);
+            scoreMultiplier = 1f;
+            luckyCloverCoroutine = null;
+            Debug.Log("Lucky Clover effect cleared.");
+        }
+    }
+
+    private IEnumerator LuckyCloverCoroutine(float multiplier, float duration)
+    {
+        Debug.Log($"Lucky Clover activated! Score multiplier: {multiplier} for {duration}s.");
+        scoreMultiplier = multiplier;
+
+        float timer = duration;
+        while (timer > 0)
+        {
+            if (CurrentGameState == GameState.Playing)
+            {
+                timer -= Time.deltaTime;
+            }
+            yield return null; // 每帧等待
+        }
+
+        Debug.Log("Lucky Clover wore off.");
+        scoreMultiplier = 1f;
+        luckyCloverCoroutine = null;
+    }
+
     public void StartGame()
     {
         this.CurrentGameState = GameState.Playing; // 设置游戏状态为Playing

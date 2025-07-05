@@ -1,26 +1,25 @@
 ﻿using TMPro;
-using UnityEngine;
-using UnityEngine.EventSystems;
 
-public class UIVictory :UIWindow, IPointerClickHandler
+
+public class UIVictory :UIWindow
 {
     public TMP_Text textTotalScore;
-    public TMP_Text textTip;
-    string textv1 = "点击任意位置继续";
-    //string textv2 = "恭喜你，所有关卡已完成！";
+    //public TMP_Text textTip;
 
-    public void OnPointerClick(PointerEventData eventData)
+    public void OnNextLevelButtonClick()
     {
-        Debug.Log("点击了UIVictory面板");
-
         OnClickClose();
         GameManager.Instance.StartReady(emLoadLevelType.LoadNextLevel);
     }
 
-    //
+    public void OnShopButtonClick()
+    {
+        OnClickClose();
+        GameManager.Instance.CurrentGameState = GameManager.GameState.Store;
+    }
+    
     public void SetInfo(int totalScore)
     {
         textTotalScore.text = $"总计得分:{totalScore}";
-        textTip.text = textv1;
     }
 }
