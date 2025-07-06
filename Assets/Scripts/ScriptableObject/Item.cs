@@ -6,7 +6,8 @@ public enum ItemType
     Bomb,           // 炸弹
     TimeExtension,  // 增加时间
     LuckyClover,    // 幸运草
-    Magnet          // 磁铁
+    Magnet,          // 磁铁
+    Max             // 用于随机数范围, 必须是最后一个
 }
 
 [CreateAssetMenu(fileName = "New Item", menuName = "Gold Miner/Item")]

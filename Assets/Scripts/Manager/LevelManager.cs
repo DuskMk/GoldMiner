@@ -18,23 +18,7 @@ public class LevelManager : MonoSingleton<LevelManager>
     private List<GameObject> spawnedTreasures = new List<GameObject>(); // 跟踪本关生成的所有宝藏
     public event System.Action<LevelData> OnLevelDataLoaded; //参数targetScore, time
 
-    private Tween magnetTween;
-
-    void OnEnable()
-    {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
-        }
-    }
-
-    void OnDisable()
-    {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
-        }
-    }
+    public ClawController clawController;
 
     // 游戏开始时自动加载第一关
     void Start()
@@ -215,35 +199,11 @@ public class LevelManager : MonoSingleton<LevelManager>
         }
     }
     
-    private void HandleGameStateChanged(GameManager.GameState newState)
-    {
-        if (magnetTween == null || !magnetTween.IsActive()) return;
-
-        if (newState == GameManager.GameState.Playing)
-        {
-            magnetTween.Play();
-        }
-        else if (newState == GameManager.GameState.Pause)
-        {
-            magnetTween.Pause();
-        }
-        else // Victory, Failure, Store, Ready etc.
-        {
-            magnetTween.Kill();
-            magnetTween = null;
-            Debug.Log("Magnet tween killed due to game state change.");
-        }
-    }
+    
 
     public void ActivateMagnet(float duration)
     {
-        // Kill any existing magnet tween first
-        if (magnetTween != null && magnetTween.IsActive())
-        {
-            magnetTween.Kill();
-        }
-
-        // 1. Find all active gold treasures
+        // ... (Find all active gold treasures logic is the same)
         var goldTreasures = spawnedTreasures.Where(t => 
             t.activeInHierarchy &&
             t.GetComponent<Treasure>() != null &&
@@ -258,20 +218,17 @@ public class LevelManager : MonoSingleton<LevelManager>
             return;
         }
 
-        // 2. Pick a random one
-        GameObject targetTreasure = goldTreasures[Random.Range(0, goldTreasures.Count)];
+        GameObject targetTreasureGO = goldTreasures[Random.Range(0, goldTreasures.Count)];
+        Treasure targetTreasure = targetTreasureGO.GetComponent<Treasure>();
+
+        if (targetTreasure == null) return;
+        
         Debug.Log($"Magnet targeting: {targetTreasure.name}");
 
-        // 3. Find target position (near claw)
-        Vector3 targetPosition = FindObjectOfType<ClawController>().transform.position;
-        targetPosition.y -= 2; // Move it slightly below the claw's pivot
+        Vector3 targetPosition = clawController?.initialPosition?? FindObjectOfType<ClawController>().initialPosition;
+        targetPosition.y -= 2; 
 
-        // 4. Use DOTween to move it and store the tween
-        magnetTween = targetTreasure.transform.DOMove(targetPosition, duration)
-            .SetEase(Ease.InOutSine)
-            .OnComplete(() => {
-                Debug.Log("Magnet pull finished.");
-                magnetTween = null;
-            });
+        // Call the treasure's own method
+        targetTreasure.StartMagneticMove(targetPosition, duration);
     }
 }

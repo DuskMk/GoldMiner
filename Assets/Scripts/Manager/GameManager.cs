@@ -14,7 +14,8 @@ public class GameManager : MonoSingleton<GameManager>
     public enum GameState { Ready, Playing, Victory, Failure, Store, Pause }
     public event Action<GameState> OnGameStateChanged;
 
-    private ClawController clawController;
+    [SerializeField] private ClawController clawController;
+    
     [SerializeField] private int currentScore;
     [SerializeField] private int lastLevelTotalScore;
 
@@ -26,7 +27,6 @@ public class GameManager : MonoSingleton<GameManager>
     private float scoreMultiplier = 1f;
     private Coroutine luckyCloverCoroutine;
 
-    private WaitForSeconds waitForSeconds;
     public GameState CurrentGameState
     {
         get { return currentGameState; }
@@ -36,13 +36,16 @@ public class GameManager : MonoSingleton<GameManager>
             {
                 currentGameState = value;
                 OnGameStateChanged?.Invoke(currentGameState);
-                SetClawEnable();
+                
 
-                // 当游戏状态改变时，检查是否要清除增益效果
+                // 当游戏状态改变时，检查是否要清除增益效果或重置爪子
                 if (currentGameState != GameState.Playing && currentGameState != GameState.Pause)
                 {
                     ClearLuckyCloverEffect();
+                    clawController?.ResetClaw();
                 }
+                
+                SetClawEnable();
             }
         }
     }
@@ -89,15 +92,14 @@ public class GameManager : MonoSingleton<GameManager>
     {
         // GameManager在开始时处于"准备"状态，等待LevelManager加载关卡
         //CurrentGameState = GameState.Ready;
-        clawController = FindObjectOfType<ClawController>();
+        if(!clawController) clawController = FindObjectOfType<ClawController>();
         //OnGameStateChanged?.Invoke(CurrentGameState);
-
     }
 
     void Update()
     {
         if (CurrentGameState != GameState.Playing) return;
-
+        
         currentTime -= Time.deltaTime;
         OnTimeChanged?.Invoke(Mathf.CeilToInt(currentTime)); // 每帧发布时间更新事件
 

@@ -17,5 +17,5 @@ MonoBehaviour:
   description: "\u4E00\u6BB5\u65F6\u95F4\u5185\u589E\u52A0\u62C9\u53D6\u5B9D\u85CF\u7684\u529B\u91CF"
   price: 100
   duration: 10
-  value: 2
+  value: 3
   icon: {fileID: 0}

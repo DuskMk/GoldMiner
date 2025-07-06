@@ -13,9 +13,9 @@ public class UIReady: UIWindow, IPointerClickHandler
         GameManager.Instance.StartGame();
         OnClickClose();
     }
-    public void SetInfo(int targetScore, int time)
+    public void SetInfo(int targetScore, int time, int level)
     {
-        textTraget.text = $"本关目标:{targetScore}";
+        textTraget.text = $"第{level}关目标:{targetScore}";
         textTime.text = $"本关时间:{time}秒";
     }
 }

@@ -11,7 +11,8 @@ public enum TreasureType
     Rock_Big,
     Rock_Mid,
     Rock_Small,
-    Diamond
+    Diamond,
+    Item,
 }
 
 public class GameObjectManager : MonoSingleton<GameObjectManager>

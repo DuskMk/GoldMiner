@@ -30,4 +30,6 @@ MonoBehaviour:
     count: 5
   - type: 6
     count: 2
+  - type: 7
+    count: 2
   spawnAreaProfile: {fileID: 11400000, guid: 6b12b36ebbe71b041bc8185d58f7b366, type: 2}

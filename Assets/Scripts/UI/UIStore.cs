@@ -19,7 +19,7 @@ public class UIStore : UIWindow
 
     protected override void OnDisable()
     {
-        GameManager.Instance.OnScoreChanged -= UpdateScoreText;
+        if(GameManager.Instance) GameManager.Instance.OnScoreChanged -= UpdateScoreText;
     }
 
     void Start()

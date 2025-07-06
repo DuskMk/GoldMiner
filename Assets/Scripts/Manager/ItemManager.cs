@@ -26,16 +26,6 @@ public class ItemManager : MonoSingleton<ItemManager>
         {
             GameManager.Instance.SpendScore(item.price);
             
-            //// "增加时间"这类道具是立即使用的，不计入库存
-            //if (item.itemType == ItemType.TimeExtension)
-            //{
-            //    // 第二个参数为false，表示不从库存中消耗
-            //    UseItem(item.itemType, false); 
-            //}
-            //else
-            //{
-            //    AddItem(item.itemType);
-            //}
             AddItem(item.itemType);
             Debug.Log($"成功购买 {item.itemName}.");
             return true;
@@ -86,7 +76,7 @@ public class ItemManager : MonoSingleton<ItemManager>
         }
 
         // 从所有道具列表中找到对应的ScriptableObject，以获取其详细数据
-        Item itemToUse = allItems.Find(item => item.itemType == itemType);
+        Item itemToUse = GetItemInfo(itemType);
         if (itemToUse == null)
         {
             Debug.LogError($"在ItemManager的allItems列表中未找到 {itemType} 的数据。");
@@ -97,6 +87,11 @@ public class ItemManager : MonoSingleton<ItemManager>
         TriggerItemEffect(itemToUse);
         
         Debug.Log($"已使用 {itemType}。");
+
+        // 使用道具的跳字提示
+        string richText = $"<color=#87CEFA>使用 {itemToUse.itemName}</color>\n<size=22>{itemToUse.description}</size>";
+        FloatingTextManager.Instance.ShowAtScreenTop(FloatingTextType.ItemUse, richText, 80, Color.white, 3f);
+
         return true;
     }
 
@@ -135,5 +130,9 @@ public class ItemManager : MonoSingleton<ItemManager>
                 LevelManager.Instance.ActivateMagnet(item.duration);
                 break;
         }
+    }
+    public Item GetItemInfo(ItemType itemType)
+    {
+        return allItems.Find(item => item.itemType == itemType);
     }
 }

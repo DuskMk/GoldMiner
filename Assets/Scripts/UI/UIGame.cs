@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class UIGame : MonoBehaviour
 {
@@ -9,6 +10,12 @@ public class UIGame : MonoBehaviour
     public TextMeshProUGUI totalScoreText;
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI targetText;
+    public TextMeshProUGUI levelText;
+    [Header("时间紧急效果")]
+    [Tooltip("从几秒开始触发时间紧急效果")]
+    public int lowTimeThreshold = 10;
+    private int lastDisplayedTime = -1;
+    private Tween timerTween;
     [Header("道具UI")]
     public Button useBombButton;
     public TextMeshProUGUI bombCountText;
@@ -24,6 +31,7 @@ public class UIGame : MonoBehaviour
     private int totalScore;
     private int targetScore;
     private int timeLimit;
+    
     void OnEnable()
     {
         // 订阅GameManager的事件
@@ -145,8 +153,28 @@ public class UIGame : MonoBehaviour
     {
         ItemManager.Instance.UseItem(ItemType.TimeExtension);
     }
+
+    public void OnPauseClick()
+    {
+        UIManager.Instance.Show<UIPause>();
+    }
     private void UpdateScoreText(int newScore, int totalScore)
     {
+        int scoreDifference = newScore - this.curScore;
+
+        if (scoreDifference > 0)
+        {
+            FloatingTextManager.Instance.Show(
+                FloatingTextType.Score,
+                $"获得金币{scoreDifference}", 
+                80, 
+                Color.yellow, 
+                scoreText.transform.position + Vector3.up *30f, 
+                new Vector3(0, 50, 0), 
+                1f
+            );
+        }
+
         this.totalScore = totalScore;
         curScore = newScore;
         scoreText.text = string.Format("得分:{0}", newScore);
@@ -155,7 +183,28 @@ public class UIGame : MonoBehaviour
 
     private void UpdateTimerText(int newTime)
     {
+        // 避免在同一秒内重复触发动画
+        if (newTime == lastDisplayedTime) return;
+        lastDisplayedTime = newTime;
+
         timerText.text = newTime.ToString();
+
+        // 检查是否达到触发阈值
+        if (newTime > 0 && newTime <= lowTimeThreshold)
+        {
+            // 如果上一个动画还在播放，先终止它
+            if (timerTween != null && timerTween.IsActive())
+            {
+                timerTween.Kill(true); // true表示立即完成动画状态
+            }
+
+            SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_Timer_Tick); 
+
+            // 创建一个新的动画
+            timerText.transform.localScale = Vector3.one; // 重置大小
+            timerTween = timerText.transform.DOPunchScale(new Vector3(1.5f, 1.5f, 1.5f), 0.5f, 5, 0.5f)
+                .SetUpdate(true); // SetUpdate(true) 可以在Time.timeScale为0时继续播放，适用于暂停
+        }
     }
 
     private void UpdateTargetText(int newTarget)
@@ -172,7 +221,10 @@ public class UIGame : MonoBehaviour
             case GameManager.GameState.Ready:
                 timeLimit = LevelManager.Instance.GetCurLevelData().timeLimit;
                 var uIr = UIManager.Instance.Show<UIReady>();
-                uIr.SetInfo(targetScore, timeLimit);
+                // 注意：这里的 levelIndex 是从 0 开始的，所以需要加 1 来显示为第几关
+                int level = LevelManager.Instance.GetCurLevelData().levelIndex + 1;
+                uIr.SetInfo(targetScore, timeLimit, level);
+                levelText.text = $"第{level}关";
                 break;
             case GameManager.GameState.Playing:
                 break;
