@@ -198,7 +198,7 @@ public class UIGame : MonoBehaviour
                 timerTween.Kill(true); // true表示立即完成动画状态
             }
 
-            SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_Timer_Tick); 
+            SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_other); 
 
             // 创建一个新的动画
             timerText.transform.localScale = Vector3.one; // 重置大小

@@ -9,8 +9,9 @@ public class Treasure : MonoBehaviour
     public TreasureType myType;
     public int value = 500;  // 这个宝藏的价值（金钱）
     public float weight = 5f;  // 这个宝藏的重量（影响收回速度）
-    public Vector3 ClawHoldOffset; 
-
+    public Vector3 ClawHoldOffset; // 宝藏被抓取时的偏移量
+    [Tooltip("该宝藏是否会触发角力机制")]
+    public bool causesStruggle = false;
     private Tween magnetTween;
 
     public void StartMagneticMove(Vector3 targetPosition, float duration)

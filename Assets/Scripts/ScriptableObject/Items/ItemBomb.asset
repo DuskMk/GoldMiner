@@ -15,7 +15,7 @@ MonoBehaviour:
   itemType: 1
   itemName: "\u70B8\u5F39"
   description: "\u70B8\u6389\u94A9\u722A\u4E0A\u7684\u7269\u4F53"
-  price: 75
+  price: 50
   duration: 0
   value: 0
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 8236662aec0de224d832a9974bd8b1b4, type: 3}

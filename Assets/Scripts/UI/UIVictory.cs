@@ -5,7 +5,11 @@ public class UIVictory :UIWindow
 {
     public TMP_Text textTotalScore;
     //public TMP_Text textTip;
-
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        SoundManager.Instance.PlaySound(SoundDefine.SFX_UI_End);
+    }
     public void OnNextLevelButtonClick()
     {
         OnClickClose();

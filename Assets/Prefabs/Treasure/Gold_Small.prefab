@@ -98,10 +98,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 869e63084f6db0d4ca4cab3ec58991a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  myType: 0
+  myType: 2
   value: 25
   weight: 2
   ClawHoldOffset: {x: 0, y: -0.7, z: 0}
+  causesStruggle: 0
 --- !u!58 &8380606766863798858
 CircleCollider2D:
   m_ObjectHideFlags: 0

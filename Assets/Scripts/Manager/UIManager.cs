@@ -29,6 +29,8 @@ public class UIManager : Singleton<UIManager>
         this.UIResources.Add(typeof(UICompleted), new UIElement() { Resources = "UI/UICompleted", Cache = true });
         this.UIResources.Add(typeof(UIStore), new UIElement() { Resources = "UI/UIStore", Cache = true });
         this.UIResources.Add(typeof(UIPause), new UIElement() { Resources = "UI/UIPause", Cache = true });
+        this.UIResources.Add(typeof(UISetting), new UIElement() { Resources = "UI/UISetting", Cache = true });
+
     }
     ~UIManager() { }
 
@@ -37,7 +39,7 @@ public class UIManager : Singleton<UIManager>
     /// </summary>
     public T Show<T>()
     {   //播放声音
-        SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_Win_Open);
+        SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_other);
 
         //获取 UI 的类型，存在Type变量type中，以便检查字典
         Type type = typeof(T);
@@ -72,7 +74,7 @@ public class UIManager : Singleton<UIManager>
     public void Close(Type type, bool isplaysound = true)
     {
         //播放声音
-        if(isplaysound) SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_Win_Close);
+        //if(isplaysound) SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_other);
 
         if (this.UIResources.ContainsKey(type))
         {   //从字典获取UI信息

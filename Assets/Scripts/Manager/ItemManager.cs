@@ -24,8 +24,9 @@ public class ItemManager : MonoSingleton<ItemManager>
 
         if (totalScore >= item.price)
         {
+            SoundManager.Instance.PlaySound(SoundDefine.SFX_Score1);
+
             GameManager.Instance.SpendScore(item.price);
-            
             AddItem(item.itemType);
             Debug.Log($"成功购买 {item.itemName}.");
             return true;
@@ -89,8 +90,8 @@ public class ItemManager : MonoSingleton<ItemManager>
         Debug.Log($"已使用 {itemType}。");
 
         // 使用道具的跳字提示
-        string richText = $"<color=#87CEFA>使用 {itemToUse.itemName}</color>\n<size=22>{itemToUse.description}</size>";
-        FloatingTextManager.Instance.ShowAtScreenTop(FloatingTextType.ItemUse, richText, 80, Color.white, 3f);
+        string richText = $"<color=#87CEFA>使用 {itemToUse.itemName}</color>：{itemToUse.description}";
+        FloatingTextManager.Instance.ShowAtScreenTop(FloatingTextType.ItemUse, richText, 40, Color.white, 3f);
 
         return true;
     }
@@ -115,18 +116,28 @@ public class ItemManager : MonoSingleton<ItemManager>
         switch (item.itemType)
         {
             case ItemType.Bomb:
+                SoundManager.Instance.PlaySound(SoundDefine.SFX_Explosive);
+
                 GameObject.FindObjectOfType<ClawController>()?.DestroyGrabbedTreasure();
                 break;
             case ItemType.StrengthPotion:
+                SoundManager.Instance.PlaySound(SoundDefine.SFX_HighValue);
+
                 GameObject.FindObjectOfType<ClawController>()?.ActivateStrength(item.value, item.duration);
                 break;
             case ItemType.TimeExtension:
+                SoundManager.Instance.PlaySound(SoundDefine.SFX_Normal);
+
                 GameManager.Instance.AddTime(item.value);
                 break;
             case ItemType.LuckyClover:
+                SoundManager.Instance.PlaySound(SoundDefine.SFX_Normal);
+
                 GameManager.Instance.ActivateLuckyClover(item.value, item.duration);
                 break;
             case ItemType.Magnet:
+                SoundManager.Instance.PlaySound(SoundDefine.SFX_Normal);
+
                 LevelManager.Instance.ActivateMagnet(item.duration);
                 break;
         }

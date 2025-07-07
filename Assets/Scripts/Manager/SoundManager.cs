@@ -129,13 +129,13 @@ public class SoundManager : MonoSingleton<SoundManager>
         soundAudioSource.PlayOneShot(clip);
     }
 
-    public void PlayBattleMusic()
+    public void StopMusic()
     {
-        //string musicName = GameSetupManager.Instance.GetMusicName();
-        //if (string.IsNullOrEmpty(musicName)) musicName = SoundDefine.Music_Battle_Default;
-        //PlayMusic(musicName);
+        if (musicAidioSource.isPlaying)
+        {
+            musicAidioSource.Stop();
+        }
     }
-
     public AudioMixerGroup[] GetSoundGroup()
     {
         return this.audioMixer.FindMatchingGroups(sound_AudioMixerGroupName);

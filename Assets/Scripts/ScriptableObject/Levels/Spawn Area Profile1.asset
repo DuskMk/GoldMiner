@@ -17,6 +17,6 @@ MonoBehaviour:
     x: -8.4
     y: -4.57
     width: 17
-    height: 5.5
+    height: 4.85
   cameraPosition: {x: 0, y: 0, z: -10}
   cameraOrthographicSize: 5

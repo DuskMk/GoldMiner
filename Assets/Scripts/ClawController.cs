@@ -43,6 +43,21 @@ public class ClawController : MonoBehaviour
     private float strengthMultiplier = 3f;
 
     public Animator animator;
+
+    [Header("大金块角力设置")]
+    [Tooltip("角力UI提示的预制件")]
+    public GameObject strugglePromptPrefab;
+    [Tooltip("拉力随时间衰减的速度")]
+    public float struggleDecayRate = 1;
+    [Tooltip("每次点击恢复的拉力")]
+    public float struggleClickGain = 0.2f;
+
+    private bool isStruggling = false;
+    private float struggleFactor = 1f;
+    private Coroutine struggleCoroutine;
+    private GameObject activeStrugglePrompt;
+
+    private float timer = 0f; // 用于计时
     void OnEnable()
     {
         if (GameManager.Instance != null)
@@ -78,6 +93,12 @@ public class ClawController : MonoBehaviour
         // 在每一帧更新绳子的终点位置
         UpdateRope();
 
+        // 角力输入检测
+        if (isStruggling && Input.GetMouseButtonDown(0))
+        {
+            HandleStruggleClick();
+        }
+
         // 根据当前的状态，执行不同的逻辑
         switch (currentState)
         {
@@ -107,7 +128,7 @@ public class ClawController : MonoBehaviour
             if (treasure.myType == TreasureType.Item)
             {
                 var itemtype = (ItemType)Random.Range(0, (int)ItemType.Max);
-                Debug.Log($"抓到道具:{itemtype}");
+                Debug.Log($"获得道具:{itemtype}");
                 ItemManager.Instance.AddItem(itemtype);
 
                 FloatingTextManager.Instance.ShowInWorld(
@@ -136,6 +157,8 @@ public class ClawController : MonoBehaviour
         // 检测玩家输入
         if ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)&& Input.mousePosition.y < Screen.height * 0.75f) && GameManager.Instance.CurrentGameState == GameManager.GameState.Playing)
         {
+            SoundManager.Instance.PlaySound(SoundDefine.SFX_Dig);
+
             currentState = ClawState.Launching; // 切换到发射状态
         }
     }
@@ -161,9 +184,16 @@ public class ClawController : MonoBehaviour
     /// </summary>
     void HandleRetracting()
     {
+        timer += Time.deltaTime;
+        if (timer >= 0.7f)
+        {
+            SoundManager.Instance.PlaySound(SoundDefine.SFX_Pull);
+            timer = 0;
+        }
+
         // 计算返回初始位置的方向
         Vector3 directionToInitial = (initialPosition - transform.position).normalized;
-        transform.position += directionToInitial * currentRetractSpeed * Time.deltaTime * (isStrength? strengthMultiplier : 1f);
+        transform.position += directionToInitial * currentRetractSpeed * Time.deltaTime * (isStrength? strengthMultiplier : 1f) * (isStrength? 1:( isStruggling ? struggleFactor : 1f));
         animator?.SetBool("IsRetracting", true);
 
         // 如果已经非常接近初始位置，则判定为已返回
@@ -172,6 +202,7 @@ public class ClawController : MonoBehaviour
             animator.SetBool("IsRetracting", false);
             transform.position = initialPosition; // 精准归位
             currentState = ClawState.Swinging;   // 切换回摆动状态
+            ResetStruggleState();
         }
     }
     /// <summary>
@@ -196,7 +227,7 @@ public class ClawController : MonoBehaviour
             grabbedItem = other.gameObject;
             Treasure treasure = grabbedItem.GetComponent<Treasure>();
             // 停止该物体的磁力移动（如果有的话）
-            treasure?.StopMagneticMove();
+            grabbedItem.GetComponent<Treasure>()?.StopMagneticMove();
 
             // 让物体"粘"在爪子上，成为爪子的子对象
             grabbedItem.transform.SetParent(this.transform);
@@ -207,11 +238,53 @@ public class ClawController : MonoBehaviour
             // 根据抓到的物体的重量，计算本次的收回速度
             float itemWeight = treasure.weight;
             currentRetractSpeed = baseRetractSpeed / itemWeight;
+
+            // 检查是否为大金块，启动角力机制
+            if (treasure.causesStruggle)
+            {
+                ResetStruggleState();
+                isStruggling = true;
+                struggleFactor = 1f;
+                struggleCoroutine = StartCoroutine(StruggleWithBigGoldCoroutine());
+            }
+
+            if (treasure.value <=20)
+            {
+                SoundManager.Instance.PlaySound(SoundDefine.SFX_Low);
+            }
+            else if (treasure.value >= 100)
+            {
+                SoundManager.Instance.PlaySound(SoundDefine.SFX_HighValue);
+            }
+            else
+            {
+                SoundManager.Instance.PlaySound(SoundDefine.SFX_Normal);
+            }
         }
     }
     /// <summary>
-    /// 使用炸弹
+    /// 重置爪子到初始状态
     /// </summary>
+    public void ResetClaw()
+    {
+        transform.position = initialPosition;
+        transform.rotation = initialRotation;
+        currentState = ClawState.Swinging;
+        animator.SetBool("IsRetracting", false); // 确保动画状态被重置
+        if (grabbedItem != null)
+        {
+            GameObjectManager.Instance.Release(grabbedItem);
+            grabbedItem = null;
+        }
+
+        // 确保所有临时的增益效果也被清除
+        ClearStrengthEffect();
+
+        ResetStruggleState();
+
+        Debug.Log("Claw has been reset.");
+    }
+
     public void DestroyGrabbedTreasure()
     {
         if (currentState == ClawState.Retracting && grabbedItem != null)
@@ -221,6 +294,7 @@ public class ClawController : MonoBehaviour
             grabbedItem = null;
             currentRetractSpeed = baseRetractSpeed; // Reset to full speed
             animator?.SetTrigger("Bomb"); // 播放炸弹动画
+            ResetStruggleState();
         }
     }
 
@@ -278,27 +352,6 @@ public class ClawController : MonoBehaviour
         strengthCoroutine = null;
     }
     /// <summary>
-    /// 重置爪子到初始状态
-    /// </summary>
-    public void ResetClaw()
-    {
-        transform.position = initialPosition;
-        transform.rotation = initialRotation;
-        currentState = ClawState.Swinging;
-
-        if (grabbedItem != null)
-        {
-            GameObjectManager.Instance.Release(grabbedItem);
-            grabbedItem = null;
-        }
-        animator?.SetBool("IsRetracting", false);
-
-        // 确保所有临时的增益效果也被清除
-        ClearStrengthEffect();
-
-        Debug.Log("Claw has been reset.");
-    }
-    /// <summary>
     /// 设置爪子的边界
     /// </summary>
     /// <param name="clawMinY"></param>
@@ -307,5 +360,73 @@ public class ClawController : MonoBehaviour
     {
         this.clawMinY = clawMinY;
         this.clawMaxX = clawMaxX;
+    }
+
+    private void HandleStruggleClick()
+    {
+        // 如果UI提示正在显示，第一次点击只用于关闭它
+        if (activeStrugglePrompt != null)
+        {
+            Destroy(activeStrugglePrompt);
+            activeStrugglePrompt = null;
+            //return; // 本次点击不增加拉力
+        }
+
+        // 恢复拉力
+        struggleFactor = Mathf.Min(1f, struggleFactor + struggleClickGain);
+        Debug.Log($"拉力恢复! 当前系数: {struggleFactor}");
+    }
+
+    private IEnumerator StruggleWithBigGoldCoroutine()
+    {
+        Debug.Log("开始与大金块角力！");
+        while (isStruggling)
+        {
+            // 随时间降低拉力
+            struggleFactor = Mathf.Max(0f, struggleFactor - struggleDecayRate * Time.deltaTime);
+
+            // 当拉力耗尽时，显示UI提示
+            if (struggleFactor <= 0 && activeStrugglePrompt == null && !isStrength)
+            {
+                Debug.Log("拉力耗尽！");
+                activeStrugglePrompt = Instantiate(strugglePromptPrefab, parent: FindObjectOfType<Canvas>().transform);
+                // 将UI提示定位在宝物上方
+                activeStrugglePrompt.transform.position = Camera.main.WorldToScreenPoint(grabbedItem.transform.position - Vector3.up * 0.5f);
+            }
+            
+            // 如果宝物在中途被销毁，则停止
+            if (grabbedItem == null)
+            {
+                ResetStruggleState();
+                yield break;
+            }
+
+            // 更新UI提示的位置
+            if (activeStrugglePrompt != null)
+            {
+                activeStrugglePrompt.transform.position = Camera.main.WorldToScreenPoint(grabbedItem.transform.position - Vector3.up * 0.6f);
+            }
+
+            yield return null;
+        }
+    }
+
+    private void ResetStruggleState()
+    {
+        if (!isStruggling) return;
+
+        Debug.Log("角力状态已重置。");
+        isStruggling = false;
+
+        if (struggleCoroutine != null)
+        {
+            StopCoroutine(struggleCoroutine);
+            struggleCoroutine = null;
+        }
+        if (activeStrugglePrompt != null)
+        {
+            Destroy(activeStrugglePrompt);
+            activeStrugglePrompt = null;
+        }
     }
 }

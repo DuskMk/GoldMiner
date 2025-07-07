@@ -26,6 +26,10 @@ public class UIPause : UIWindow
         OnClickClose();
         GameManager.Instance.StartReady(emLoadLevelType.LoadFirstLevel);
     }
+    public void OnClickSettig()
+    {
+        UIManager.Instance.Show<UISetting>();
+    }
     public void OnClickExit()
     {
 #if UNITY_EDITOR

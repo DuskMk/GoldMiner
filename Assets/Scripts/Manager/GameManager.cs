@@ -36,15 +36,20 @@ public class GameManager : MonoSingleton<GameManager>
             {
                 currentGameState = value;
                 OnGameStateChanged?.Invoke(currentGameState);
-                
-
+                if(currentGameState == GameState.Playing || currentGameState == GameState.Store)
+                {
+                    SoundManager.Instance.PlayMusic(SoundDefine.BGM_Game);
+                }
+                else if(currentGameState == GameState.Victory || currentGameState == GameState.Failure)
+                {
+                    SoundManager.Instance.StopMusic();
+                }
                 // 当游戏状态改变时，检查是否要清除增益效果或重置爪子
                 if (currentGameState != GameState.Playing && currentGameState != GameState.Pause)
                 {
                     ClearLuckyCloverEffect();
                     clawController?.ResetClaw();
                 }
-                
                 SetClawEnable();
             }
         }
@@ -143,6 +148,14 @@ public class GameManager : MonoSingleton<GameManager>
         if (!LevelManager.Instance.CheckIsTresureActive())
         {
             LevelEnd();
+        }
+        if (scoreToAdd >=100)
+        {
+            SoundManager.Instance.PlaySound(SoundDefine.SFX_Score1);
+        }
+        else
+        {
+            SoundManager.Instance.PlaySound(SoundDefine.SFX_Score2);
         }
     }
 

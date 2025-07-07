@@ -1,6 +1,11 @@
 ﻿
 public class UIFailure : UIWindow
 {
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        SoundManager.Instance.PlaySound(SoundDefine.SFX_UI_End);
+    }
     public void OnClickRestartThisLevel()
     {
         OnClickClose();

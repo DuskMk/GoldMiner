@@ -6,6 +6,11 @@ public class UIReady: UIWindow, IPointerClickHandler
 {
     public TMP_Text textTraget; 
     public TMP_Text textTime;
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+
+    }
     public void OnPointerClick(PointerEventData eventData)
     {
         // 点击时执行的逻辑

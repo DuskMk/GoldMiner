@@ -58,7 +58,7 @@ public class UIWindow : MonoBehaviour
     }
     public virtual void OnClickYes()
     {
-        SoundManager.Instance.PlaySound(SoundDefine.SFX_UI_Confirm);
+        //SoundManager.Instance.PlaySound(SoundDefine.SFX_UI_Confirm);
 
         Hide(() => Close(emWindowResult.Yes));
         //Close(emWindowResult.Yes);

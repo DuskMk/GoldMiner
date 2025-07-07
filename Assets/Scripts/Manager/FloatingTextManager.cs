@@ -32,6 +32,7 @@ public class FloatingTextManager : MonoSingleton<FloatingTextManager>
 
     private Dictionary<FloatingTextType, IObjectPool<TextMeshProUGUI>> textPools;
 
+    private Sequence sequence;
     void Start()
     {
         if (parentCanvas == null) parentCanvas = FindObjectOfType<Canvas>();
@@ -78,8 +79,13 @@ public class FloatingTextManager : MonoSingleton<FloatingTextManager>
         textInstance.fontSize = fontSize;
         textInstance.color = new Color(color.r, color.g, color.b, 0); // Start transparent
 
+        if (sequence != null || sequence.IsActive())
+        {
+            sequence.Complete(); // 如果之前有动画序列在运行，先完成它
+            sequence.Kill();
+        } 
         // 使用DOTween创建动画序列
-        Sequence sequence = DOTween.Sequence();
+        sequence = DOTween.Sequence();
         
         // 动画效果: 弹出 -> 上浮 -> 渐隐
         sequence.Append(textInstance.DOFade(1, 0.2f)); // 快速淡入
@@ -87,7 +93,7 @@ public class FloatingTextManager : MonoSingleton<FloatingTextManager>
         sequence.Append(textInstance.transform.DOScale(1f, 0.2f)); // 恢复正常大小
         sequence.Join(textInstance.transform.DOMove(screenPosition + motion, duration * 0.8f).SetEase(Ease.OutCubic)); // 在大部分时间里上浮
         sequence.AppendInterval(duration * 0.1f); // 短暂悬停
-        sequence.Append(textInstance.DOFade(0, 0.5f)); // 渐隐消失
+        sequence.Append(textInstance.DOFade(0, 0.3f)); // 渐隐消失
         
         // 动画结束后，将对象归还到池中
         sequence.OnComplete(() => {
@@ -113,8 +119,8 @@ public class FloatingTextManager : MonoSingleton<FloatingTextManager>
     public void ShowAtScreenTop(FloatingTextType type, string text, int fontSize, Color color, float duration)
     {
         if (!this.enabled) return;
-        Vector3 position = new Vector3(Screen.width / 2, Screen.height - 150, 0);
-        Vector3 motion = new Vector3(0, 60, 0);
+        Vector3 position = new Vector3(Screen.width / 2, Screen.height - 300, 0);
+        Vector3 motion = new Vector3(0, 40, 0);
         Show(type, text, fontSize, color, position, motion, duration);
     }
 } 
