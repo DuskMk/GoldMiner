@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Level 07
   m_EditorClassIdentifier: 
   levelIndex: 6
-  targetScore: 800
+  targetScore: 1000
   timeLimit: 80
   treasuresToSpawn:
   - type: 0

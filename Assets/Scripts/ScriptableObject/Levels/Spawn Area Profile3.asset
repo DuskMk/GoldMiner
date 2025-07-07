@@ -16,7 +16,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: -11.8
     y: -8.54
-    width: 23.3
+    width: 23.8
     height: 9.44
   cameraPosition: {x: 0, y: -2.1, z: -10}
   cameraOrthographicSize: 7
