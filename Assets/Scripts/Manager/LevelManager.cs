@@ -13,7 +13,7 @@ public class LevelManager : MonoSingleton<LevelManager>
 {
     [Header("关卡配置")]
     public List<LevelData> levels; // 将所有关卡的LevelData文件拖到这里
-    private int currentLevelIndex = 0;
+    [SerializeField] private int currentLevelIndex = 0;
 
     private List<GameObject> spawnedTreasures = new List<GameObject>(); // 跟踪本关生成的所有宝藏
     public event System.Action<LevelData> OnLevelDataLoaded; //参数targetScore, time
@@ -203,13 +203,10 @@ public class LevelManager : MonoSingleton<LevelManager>
 
     public void ActivateMagnet(float duration)
     {
-        // ... (Find all active gold treasures logic is the same)
         var goldTreasures = spawnedTreasures.Where(t => 
-            t.activeInHierarchy &&
+            t.activeInHierarchy && 
             t.GetComponent<Treasure>() != null &&
-            (t.GetComponent<Treasure>().myType == TreasureType.Gold_Big ||
-             t.GetComponent<Treasure>().myType == TreasureType.Gold_Mid ||
-             t.GetComponent<Treasure>().myType == TreasureType.Gold_Small)
+            t.GetComponent<Treasure>().CanMagneticMoving()// 确保宝藏可以被磁铁吸引
         ).ToList();
 
         if (goldTreasures.Count == 0)

@@ -24,7 +24,6 @@ public class ItemManager : MonoSingleton<ItemManager>
 
         if (totalScore >= item.price)
         {
-            SoundManager.Instance.PlaySound(SoundDefine.SFX_Score1);
 
             GameManager.Instance.SpendScore(item.price);
             AddItem(item.itemType);
@@ -45,6 +44,8 @@ public class ItemManager : MonoSingleton<ItemManager>
     /// <param name="count">数量</param>
     public void AddItem(ItemType itemType, int count = 1)
     {
+        SoundManager.Instance.PlaySound(SoundDefine.SFX_Score1);
+
         if (OwnedItems.ContainsKey(itemType))
         {
             OwnedItems[itemType] += count;

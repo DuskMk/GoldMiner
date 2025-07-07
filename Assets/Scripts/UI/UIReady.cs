@@ -9,7 +9,8 @@ public class UIReady: UIWindow, IPointerClickHandler
     protected override void OnEnable()
     {
         base.OnEnable();
-
+        SoundManager.Instance.StopMusic();
+        SoundManager.Instance.PlaySound(SoundDefine.SFX_UI_Ready);
     }
     public void OnPointerClick(PointerEventData eventData)
     {

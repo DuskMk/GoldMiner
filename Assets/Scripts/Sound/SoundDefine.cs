@@ -5,12 +5,12 @@
     public const string BGM_Game = "level-bg";
 
     // SFX
-    public const string SFX_UI_Ready = "cut-sence";
-    public const string SFX_UI_End = "cut-sence-2";
+    public const string SFX_UI_Ready = "cut-scene";
+    public const string SFX_UI_End = "cut-scene-2";
     public const string SFX_UI_other = "sound197";
 
     public const string SFX_Dig = "dig";
-    public const string SFX_Pull = "pull";
+    public const string SFX_Pull = "pull-org";
 
     public const string SFX_Explosive = "explosive";
     public const string SFX_HighValue = "high-value";

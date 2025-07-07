@@ -13,7 +13,7 @@ public class Treasure : MonoBehaviour
     [Tooltip("该宝藏是否会触发角力机制")]
     public bool causesStruggle = false;
     private Tween magnetTween;
-
+    
     public void StartMagneticMove(Vector3 targetPosition, float duration)
     {
         // 确保不会重复启动
@@ -32,7 +32,11 @@ public class Treasure : MonoBehaviour
             magnetTween = null;
         }
     }
-
+    public bool CanMagneticMoving()
+    {
+        return  (myType == TreasureType.Gold_Small || myType == TreasureType.Gold_Mid || myType == TreasureType.Gold_Big) && magnetTween == null && !magnetTween.IsActive();
+    }
+    
     private void OnDisable()
     {
         // 当宝藏被对象池回收时，确保动画被终止

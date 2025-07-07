@@ -104,12 +104,13 @@ public class SoundManager : MonoSingleton<SoundManager>
         }
         if (musicAidioSource.clip == clip)
         {
+            if (!musicAidioSource.isPlaying)
+            {
+                musicAidioSource.Play();
+            }
             return;
         }
-        if (musicAidioSource.isPlaying)
-        {
-            musicAidioSource.Stop();
-        }
+        
         musicAidioSource.clip = clip;
         musicAidioSource.Play();
     }
