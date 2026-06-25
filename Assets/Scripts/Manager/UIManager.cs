@@ -4,24 +4,24 @@ using UnityEngine;
 
 public class UIManager : Singleton<UIManager>
 {
-    //¶¨ÒåÁËÒ»¸öÃûÎª UIElement µÄÄÚ²¿Àà£¬ÓÃÓÚ´æ´¢ UI ×ÊÔ´µÄĞÅÏ¢¡£
+    //å®šä¹‰äº†ä¸€ä¸ªåä¸º UIElement çš„å†…éƒ¨ç±»ï¼Œç”¨äºå­˜å‚¨ UI èµ„æºçš„ä¿¡æ¯ã€‚
     class UIElement
     {
-        //×ÊÔ´Â·¾¶
+        //èµ„æºè·¯å¾„
         public string Resources;
-        //ÊÇ·ñ»º´æ(µã»÷¹Ø±ÕÊÇÒş²Ø»¹ÊÇÖ±½ÓÏú»Ù)
+        //æ˜¯å¦ç¼“å­˜(ç‚¹å‡»å…³é—­æ˜¯éšè—è¿˜æ˜¯ç›´æ¥é”€æ¯)
         public bool Cache;
-        //»º´æÎªtrueÊ±´¢´æÔÚInstance,ÓÃÓÚ´æ´¢»º´æµÄ UI ×ÊÔ´µÄÊµÀı¡£
+        //ç¼“å­˜ä¸ºtrueæ—¶å‚¨å­˜åœ¨Instance,ç”¨äºå­˜å‚¨ç¼“å­˜çš„ UI èµ„æºçš„å®ä¾‹ã€‚
         public GameObject Instance;
     }
 
-    //×Öµä£¬´æ´¢ËùÓĞÒÑ¶¨ÒåµÄ UI ×ÊÔ´ĞÅÏ¢
+    //å­—å…¸ï¼Œå­˜å‚¨æ‰€æœ‰å·²å®šä¹‰çš„ UI èµ„æºä¿¡æ¯
     private Dictionary<Type, UIElement> UIResources = new Dictionary<Type, UIElement>();
 
-    //¹¹Ôìº¯Êı£¬ÒÔ±ãÒ»¿ªÊ¼¾ÍÖ´ĞĞ,ÓÃÓÚ³õÊ¼»¯ UI ×ÊÔ´×Öµä¡£
+    //æ„é€ å‡½æ•°ï¼Œä»¥ä¾¿ä¸€å¼€å§‹å°±æ‰§è¡Œ,ç”¨äºåˆå§‹åŒ– UI èµ„æºå­—å…¸ã€‚
     public UIManager()
-    {   //ÔÚ×ÖµäÖĞÌí¼ÓÒ»¸ö UI ×ÊÔ´ĞÅÏ¢£¬ÀàĞÍÎª UITest£¬×ÊÔ´Â·¾¶Îª UI/UITest£¬²¢ÉèÖÃ Cache Îª true£¬±íÊ¾ĞèÒª»º´æ¡£
-        //this.UIResources.Add(typeof(UIBag), new UIElement() { Resources = "UI/Bag/UIBag", Cache = false });//false£¬ÒÔ±ãÃ¿´ÎÉú³É¶¼Ö´ĞĞÒ»´ÎStart·½·¨£¬Ë¢ĞÂ±³°üÎïÆ·
+    {   //åœ¨å­—å…¸ä¸­æ·»åŠ ä¸€ä¸ª UI èµ„æºä¿¡æ¯ï¼Œç±»å‹ä¸º UITestï¼Œèµ„æºè·¯å¾„ä¸º UI/UITestï¼Œå¹¶è®¾ç½® Cache ä¸º trueï¼Œè¡¨ç¤ºéœ€è¦ç¼“å­˜ã€‚
+        //this.UIResources.Add(typeof(UIBag), new UIElement() { Resources = "UI/Bag/UIBag", Cache = false });//falseï¼Œä»¥ä¾¿æ¯æ¬¡ç”Ÿæˆéƒ½æ‰§è¡Œä¸€æ¬¡Startæ–¹æ³•ï¼Œåˆ·æ–°èƒŒåŒ…ç‰©å“
         this.UIResources.Add(typeof(UIReady), new UIElement() { Resources = "UI/UIReady", Cache = true });
         this.UIResources.Add(typeof(UIVictory), new UIElement() { Resources = "UI/UIVictory", Cache = true });
         this.UIResources.Add(typeof(UIFailure), new UIElement() { Resources = "UI/UIFailure", Cache = true });
@@ -35,56 +35,56 @@ public class UIManager : Singleton<UIManager>
     ~UIManager() { }
 
     /// <summary>
-    /// Show UI£¬·ºĞÍ·½·¨£¬ÓÃÓÚÏÔÊ¾Ö¸¶¨µÄ UI, Í¨³£ÓÉUIMainºÍÆäËûUI¹ÜÀíÆ÷µ÷ÓÃ
+    /// Show UIï¼Œæ³›å‹æ–¹æ³•ï¼Œç”¨äºæ˜¾ç¤ºæŒ‡å®šçš„ UI, é€šå¸¸ç”±UIMainå’Œå…¶ä»–UIç®¡ç†å™¨è°ƒç”¨
     /// </summary>
     public T Show<T>()
-    {   //²¥·ÅÉùÒô
+    {   //æ’­æ”¾å£°éŸ³
         SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_other);
 
-        //»ñÈ¡ UI µÄÀàĞÍ£¬´æÔÚType±äÁ¿typeÖĞ£¬ÒÔ±ã¼ì²é×Öµä
+        //è·å– UI çš„ç±»å‹ï¼Œå­˜åœ¨Typeå˜é‡typeä¸­ï¼Œä»¥ä¾¿æ£€æŸ¥å­—å…¸
         Type type = typeof(T);
-        // ¼ì²é UI ×ÊÔ´×ÖµäÖĞÊÇ·ñ°üº¬¸ÃÀàĞÍµÄ UI ×ÊÔ´¡£
+        // æ£€æŸ¥ UI èµ„æºå­—å…¸ä¸­æ˜¯å¦åŒ…å«è¯¥ç±»å‹çš„ UI èµ„æºã€‚
         if (this.UIResources.ContainsKey(type))
-        {   //Èç¹û°üº¬£¬Ôò»ñÈ¡ UI ×ÊÔ´ĞÅÏ¢£¬²¢ÅĞ¶ÏÊÇ·ñĞèÒª´´½¨»òÏÔÊ¾ UI ÊµÀı
+        {   //å¦‚æœåŒ…å«ï¼Œåˆ™è·å– UI èµ„æºä¿¡æ¯ï¼Œå¹¶åˆ¤æ–­æ˜¯å¦éœ€è¦åˆ›å»ºæˆ–æ˜¾ç¤º UI å®ä¾‹
             UIElement info = this.UIResources[type];
             if(info.Instance != null)
-            {   //Èç¹û´æÔÚ UI ÊµÀı£¬Ôò¼¤»î
+            {   //å¦‚æœå­˜åœ¨ UI å®ä¾‹ï¼Œåˆ™æ¿€æ´»
                 info.Instance.SetActive(true);
             }
             else
-            {   //²»´æÔÚ¸ÃÊµÀıÔò¼ÓÔØ¸ÃUIÔ¤ÖÆÌå
+            {   //ä¸å­˜åœ¨è¯¥å®ä¾‹åˆ™åŠ è½½è¯¥UIé¢„åˆ¶ä½“
                 UnityEngine.Object prefab = Resources.Load(info.Resources);
                 if (prefab == null)
-                {   //Îª¿ÕËµÃ÷Ã»ÓĞ¸ÃÔ¤ÖÆÌå£¬·µ»ØÀàĞÍ T µÄÄ¬ÈÏÖµ£¬Í¨³£Îª null£¬²»ÔÙÖ´ĞĞÖ®ºóµÄÓï¾ä
+                {   //ä¸ºç©ºè¯´æ˜æ²¡æœ‰è¯¥é¢„åˆ¶ä½“ï¼Œè¿”å›ç±»å‹ T çš„é»˜è®¤å€¼ï¼Œé€šå¸¸ä¸º nullï¼Œä¸å†æ‰§è¡Œä¹‹åçš„è¯­å¥
                     return default(T);
                 }
-                //¼ÓÔØ³É¹¦ÔòÊµÀı»¯¸ÃUIÔ¤ÖÆÌå£¬´æÔÚInstanceÖĞ¡£
+                //åŠ è½½æˆåŠŸåˆ™å®ä¾‹åŒ–è¯¥UIé¢„åˆ¶ä½“ï¼Œå­˜åœ¨Instanceä¸­ã€‚
                 info.Instance = (GameObject)GameObject.Instantiate(prefab);
             }
-            //´ÓUIÊµÀıÉÏ»ñÈ¡Ö¸¶¨ÀàĞÍ T µÄ×é¼ş£¬²¢½«Æä·µ»Ø
+            //ä»UIå®ä¾‹ä¸Šè·å–æŒ‡å®šç±»å‹ T çš„ç»„ä»¶ï¼Œå¹¶å°†å…¶è¿”å›
             return info.Instance.GetComponent<T>();
         }
-        //µ±ÎŞ·¨»ñÈ¡ UI ÊµÀı£¬»òÕßÎŞ·¨´Ó UI ÊµÀıÉÏ»ñÈ¡Ö¸¶¨ÀàĞÍµÄ×é¼şÊ±£¬Ôò·µ»ØÀàĞÍ T µÄÄ¬ÈÏÖµ£¬Í¨³£Îª null¡£
+        //å½“æ— æ³•è·å– UI å®ä¾‹ï¼Œæˆ–è€…æ— æ³•ä» UI å®ä¾‹ä¸Šè·å–æŒ‡å®šç±»å‹çš„ç»„ä»¶æ—¶ï¼Œåˆ™è¿”å›ç±»å‹ T çš„é»˜è®¤å€¼ï¼Œé€šå¸¸ä¸º nullã€‚
         return default(T);
     }
 
     /// <summary>
-    /// ¹Ø±Õ UI ·½·¨£¬Í¨³£ÓÉUIWindowµ÷ÓÃ
+    /// å…³é—­ UI æ–¹æ³•ï¼Œé€šå¸¸ç”±UIWindowè°ƒç”¨
     /// </summary>
     public void Close(Type type, bool isplaysound = true)
     {
-        //²¥·ÅÉùÒô
+        //æ’­æ”¾å£°éŸ³
         //if(isplaysound) SoundManager.Instance?.PlaySound(SoundDefine.SFX_UI_other);
 
         if (this.UIResources.ContainsKey(type))
-        {   //´Ó×Öµä»ñÈ¡UIĞÅÏ¢
+        {   //ä»å­—å…¸è·å–UIä¿¡æ¯
             UIElement info = this.UIResources[type];
             if(info.Cache)
-            {   //CacheÎªtrueÔòÒş²Ø
+            {   //Cacheä¸ºtrueåˆ™éšè—
                 info.Instance.SetActive(false);
             }
             else
-            {   //CacheÎªfalseÔòÏú»Ù£¬²¢¸üĞÂ¸ÃUIĞÅÏ¢µÄInstanceµÄ¼ÇÂ¼
+            {   //Cacheä¸ºfalseåˆ™é”€æ¯ï¼Œå¹¶æ›´æ–°è¯¥UIä¿¡æ¯çš„Instanceçš„è®°å½•
                 GameObject.Destroy(info.Instance);
                 info.Instance = null;
             }
